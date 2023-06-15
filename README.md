@@ -1,25 +1,3 @@
-# Foundry + nodemon + docker-compose boilerplate
+# ERC20 Assembly with foundry
 
-Small boilerplate repository for developing on Foundry.
-
-It will compile and test your contracts under `src` on save. Happy coding!
-
-## Usage
-
-### docker-compose
-
-Can be used via docker-compose:
-
-`docker-compose up`
-
-You can set environment variables and flags with an `.env` file
-
-```
-FOUNDRY_FLAGS="--fork-url https://eth-mainnet.alchemyapi.io/v2/QfzWQxGrh8ORZGyXbpg0I8hsVDnT_yTq"
-```
-
-### nodemon
-
-If you have nodemon already installed as a global:
-
-`nodemon <--args>`
+This repository is part of my efforts to get more muscle memory when coding solidity - yul.
