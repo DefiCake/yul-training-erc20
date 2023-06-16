@@ -38,30 +38,46 @@ contract ERC20Test is DSTest {
 		assertEq(maxLengthErc20.name(), maxLengthName);
 	}
 
-	function testTransfer_Static() public {
-		erc20.mint(1);
-		address to = address(uint160(address(this)) + 1);
-
-		erc20.transfer(to, 1);
-
-		assertEq(erc20.balanceOf(msg.sender), 0, "oooh");
-		assertEq(erc20.balanceOf(to), 1, "aaaah");
-	}
-
-	function testTransfer(uint mintAmount, uint transferAmount, address to) public {
-		vm.assume(mintAmount > transferAmount);
+	function testTransfer_NotEnoughBalance(uint mintAmount, uint transferAmount, address to) public {
+		vm.assume(mintAmount < transferAmount);
 		erc20.mint(mintAmount);
 
-		uint prev_balanceOfSender = erc20.balanceOf(address(this));
+		vm.expectRevert(ERC20.NotEnoughBalance.selector);
+		erc20.transfer(to, transferAmount);
+	}
+
+	function testTransfer_Static() public {
+		address from = address(0xDEAD);
+		address to = address(0xBEEF);
+
+		vm.prank(from);
+		erc20.mint(0x277);
+
+		vm.prank(from);
+		erc20.transfer(to, 0x277);
+
+		assertEq(erc20.balanceOf(from), 0, "Bad sender balance");
+		assertEq(erc20.balanceOf(to), 0x277, "Bad receiver balance");
+	}
+
+	function testTransfer(uint mintAmount, uint transferAmount, address from, address to) public {
+		vm.assume(mintAmount > transferAmount);
+		vm.assume(from != to);
+
+		vm.prank(from);
+		erc20.mint(mintAmount);
+
+		uint prev_balanceOfSender = erc20.balanceOf(from);
 		uint prev_balanceOfReceiver = erc20.balanceOf(to);
 
+		vm.prank(from);
 		erc20.transfer(to, transferAmount);
 
-		uint senderBalanceDelta = prev_balanceOfSender - erc20.balanceOf(address(this));
+		uint senderBalanceDelta = prev_balanceOfSender - erc20.balanceOf(from);
 		uint receiverBalanceDelta = erc20.balanceOf(to) - prev_balanceOfReceiver;
 
-		assertEq(senderBalanceDelta, transferAmount);
-		assertEq(receiverBalanceDelta, transferAmount);
+		assertEq(senderBalanceDelta, transferAmount, "Bad sender delta");
+		assertEq(receiverBalanceDelta, transferAmount, "Bad receiver delta");
 
 	}
 }

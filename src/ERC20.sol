@@ -17,7 +17,9 @@ contract ERC20 {
 	bytes32 private _name; // slot 0x1
 
 	mapping(address => uint256) private balances; // keccak256(0x2,address)
-	mapping(address => mapping(address => uint256)) public allowance;
+	mapping(address => mapping(address => uint256)) public allowance; // keccak256(0x3,address)
+
+	uint totalSupply; // slot 0x4
 
 	constructor(
 		uint256 _decimals,
@@ -67,28 +69,29 @@ contract ERC20 {
 		}
 	}
 
-	function transfer(address to, uint256 amount) external {
-
-		uint _bal;
-
+	function transfer(address, uint256) external returns (bool) {
 		assembly {
-			// let freeMemPointer := mload(0x40)
-			// mstore(0x40, add(freeMemPointer, 0x40))
-			// mstore(freeMemPointer, caller())
-			// mstore(add(freeMemPointer, 0x20), 0x2)
-			// let slot := keccak256(freeMemPointer, 0x40)
-			// mstore(freeMemPointer, sload(slot))
 
-			// _bal := mload(freeMemPointer)
+			mstore(0x80, caller())
+			mstore(0xa0, 0x2)
+			let slot := keccak256(0x80,0x40)
+			let curr_balance := sload(slot)
+			let amt := calldataload(0x24)
+			let new_balance := sub(curr_balance, amt)
 
-			_bal := mload(0x40)
+			if gt(new_balance, curr_balance) {
+				mstore(0x00, 0xad3a8b9e) // NotEnoughBalance.selector
+				revert(0x1c, 0x04)
+			}
+
+			sstore(slot, new_balance)
+
+			mstore(0x80, calldataload(0x4))
+			slot := keccak256(0x80, 0x40)
+			sstore(slot, add(amt, sload(slot)))
 		}
 
-		balances[msg.sender] -= amount;
-		balances[to] += amount;
-
-		emit Transfer(msg.sender, to, amount);
-
+		return true;
 	}
 
 	function transferFrom(
@@ -101,6 +104,7 @@ contract ERC20 {
 
 	function mint(uint256 amount) public virtual {
 		balances[msg.sender] += amount;
+		totalSupply += amount;
 	}
 
 	function burn(uint256 amount) public virtual {}
