@@ -64,37 +64,4 @@ contract ERC20Test is DSTest {
 		assertEq(receiverBalanceDelta, transferAmount);
 
 	}
-                                // 1                               2		
-// 0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f 0
-// 			            deadbeefdeadbeefdeadbeefdeadbeefdeadbeef87a211a2
-// 000000000000000000000000000000000000000000000000000000000000000000000000
-	// function testPowerAssembly() public {
-	// 	uint256 base = 2;
-	// 	uint8 exponent = 8;
-
-	// 	uint256 result = base**exponent;
-	// 	assertEq(result, base.powerAssembly(exponent));
-	// }
-
-	// function testPowerSolidity() public {
-	// 	uint256 base = 2;
-	// 	uint8 exponent = 8;
-
-	// 	uint256 result = base**exponent;
-	// 	assertEq(result, base.powerSolidity(exponent));
-	// }
-
-	// function testPowerAssemblyFuzzy(uint256 base, uint8 exponent) public {
-	// 	vm.assume(base < 256 && exponent < 32);
-	// 	uint256 result = base**exponent;
-
-	// 	assertEq(result, base.powerAssembly(exponent));
-	// }
-
-	// function testPowerSolidityFuzzy(uint256 base, uint8 exponent) public {
-	// 	vm.assume(base < 256 && exponent < 32);
-	// 	uint256 result = base**exponent;
-
-	// 	assertEq(result, base.powerSolidity(exponent));
-	// }
 }

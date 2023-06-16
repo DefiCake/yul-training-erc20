@@ -107,9 +107,8 @@ contract ERC20 {
 
 	function symbol() external view returns (string memory s) {
 		uint len = _symbol_len;
-
 		assembly {
-			s := mload(0x80) // 0x60 is busy with len; next free slot is 0x80
+			s := mload(0x80) // 0x80 is the first free slot - assignment of len to immutable does not seem to impact memory
 			mstore(s, len) // store "len" at 0x80, which is the first word of s, which stores string length
 			mstore(add(s, 0x20), sload(0)) // in the next word, store the value of the first slot, which is _symbol
 		}
@@ -119,7 +118,7 @@ contract ERC20 {
 		uint len = _name_len;
 
 		assembly {
-			s := mload(0x80) // 0x60 is busy with len; next free slot is 0x80
+			s := mload(0x80) // 0x80 is the first free slot - assignment of len to immutable does not seem to impact memory
 			mstore(s, len) // store "len" at 0x80, which is the first word of s, which stores string length
 			mstore(add(s, 0x20), sload(1)) // in the next word, store the value of the first slot, which is _name
 		}
