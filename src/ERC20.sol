@@ -76,12 +76,20 @@ contract ERC20 {
 	}
 
 	function allowance(address owner, address spender) public view returns (uint _allowance) {
-		return allowances[owner][spender];
+		/// @solidity memory-safe-assembly
+		assembly {
+			mstore(0x00, owner)
+			mstore(0x20, ALLOWANCES_SLOT)
+			mstore(0x20, keccak256(0x00, 0x40))
+			mstore(0x00, spender)
+			mstore(0x00, sload(keccak256(0x00, 0x40)))
+			return(0x00, 0x20)
+		}
 	}
 
 	function transfer(address, uint256) external returns (bool) {
+		/// @solidity memory-safe-assembly
 		assembly {
-
 			mstore(0x80, caller())
 			mstore(0xa0, BALANCES_SLOT)
 			let slot := keccak256(0x80,0x40)
@@ -127,9 +135,17 @@ contract ERC20 {
 		return true;
 	}
 
-	function mint(uint256 amount) public virtual {
-		balances[msg.sender] += amount;
+	function mint(uint256 amount) public virtual returns (bool) {
+		/// @solidity memory-safe-assembly
+		assembly {
+			mstore(0x00, caller())
+			mstore(0x20, BALANCES_SLOT)
+			let slot := keccak256(0x00, 0x40)
+			let new_balance := add(sload(slot), amount)
+			sstore(slot, new_balance)
+		}
 		totalSupply += amount;
+		return true;
 	}
 
 	function burn(uint256 amount) public virtual {}
