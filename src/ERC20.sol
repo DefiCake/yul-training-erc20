@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import "forge-std/console.sol";
 
@@ -13,11 +13,17 @@ contract ERC20 {
 	uint256 private immutable _name_len;
 	uint256 private immutable decimals;
 
-	bytes32 private _symbol; // slot 0x0
-	bytes32 private _name; // slot 0x1
+	uint256 private constant SYMBOL_SLOT = 0x0;
+	uint256 private constant NAME_SLOT = 0x1;
+	uint256 private constant BALANCES_SLOT = 0x2;
+	uint256 private constant ALLOWANCES_SLOT = 0x3;
+	uint256 private constant TOTAL_SUPPLY_SLOT = 0x4;
 
-	mapping(address => uint256) private balances; // keccak256(0x2,address)
-	mapping(address => mapping(address => uint256)) public allowance; // keccak256(0x3,address)
+	bytes32 private _symbol;
+	bytes32 private _name;
+
+	mapping(address => uint256) private balances; // keccak256(address,0x2)
+	mapping(address => mapping(address => uint256)) public allowance; // keccak256(address,0x3)
 
 	uint totalSupply; // slot 0x4
 
@@ -63,7 +69,7 @@ contract ERC20 {
 	function balanceOf(address holder) public view returns (uint _bal) {
 		assembly {
 			mstore(0x00, holder)
-			mstore(0x20, 0x2)
+			mstore(0x20, BALANCES_SLOT)
 			let slot := keccak256(0x00, 0x40)
 			_bal := sload(slot)
 		}
@@ -73,7 +79,7 @@ contract ERC20 {
 		assembly {
 
 			mstore(0x80, caller())
-			mstore(0xa0, 0x2)
+			mstore(0xa0, BALANCES_SLOT)
 			let slot := keccak256(0x80,0x40)
 			let curr_balance := sload(slot)
 			let amt := calldataload(0x24)
@@ -114,7 +120,7 @@ contract ERC20 {
 		assembly {
 			s := mload(0x80) // 0x80 is the first free slot - assignment of len to immutable does not seem to impact memory
 			mstore(s, len) // store "len" at 0x80, which is the first word of s, which stores string length
-			mstore(add(s, 0x20), sload(0)) // in the next word, store the value of the first slot, which is _symbol
+			mstore(add(s, 0x20), sload(SYMBOL_SLOT)) // in the next word, store the value of the first slot, which is _symbol
 		}
 	}
 
@@ -124,7 +130,7 @@ contract ERC20 {
 		assembly {
 			s := mload(0x80) // 0x80 is the first free slot - assignment of len to immutable does not seem to impact memory
 			mstore(s, len) // store "len" at 0x80, which is the first word of s, which stores string length
-			mstore(add(s, 0x20), sload(1)) // in the next word, store the value of the first slot, which is _name
+			mstore(add(s, 0x20), sload(NAME_SLOT)) // in the next word, store the value of the first slot, which is _name
 		}
 	}
 }
