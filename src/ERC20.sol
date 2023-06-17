@@ -23,7 +23,7 @@ contract ERC20 {
 	bytes32 private _name;
 
 	mapping(address => uint256) private balances; // keccak256(address,0x2)
-	mapping(address => mapping(address => uint256)) public allowance; // keccak256(address,0x3)
+	mapping(address => mapping(address => uint256)) private allowances; // keccak256(address,0x3)
 
 	uint totalSupply; // slot 0x4
 
@@ -75,6 +75,10 @@ contract ERC20 {
 		}
 	}
 
+	function allowance(address owner, address spender) public view returns (uint _allowance) {
+		return allowances[owner][spender];
+	}
+
 	function transfer(address, uint256) external returns (bool) {
 		assembly {
 
@@ -104,9 +108,24 @@ contract ERC20 {
 		address from,
 		address to,
 		uint256 amount
-	) external {}
+	) external returns (bool) {
+		return true;
+	}
 
-	function approve(address to, uint256 amount) external {}
+	function approve(address,uint256) external returns (bool) {
+		/// @solidity memory-safe-assembly
+		assembly {
+			mstore(0x00, caller())
+			mstore(0x20, ALLOWANCES_SLOT)
+			mstore(0x20, keccak256(0x00, 0x40))
+			mstore(0x00, calldataload(4))
+			let slot := keccak256(0x00, 0x40)
+
+			sstore(slot, calldataload(36))
+		}
+
+		return true;
+	}
 
 	function mint(uint256 amount) public virtual {
 		balances[msg.sender] += amount;

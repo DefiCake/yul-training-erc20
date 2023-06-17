@@ -78,6 +78,25 @@ contract ERC20Test is DSTest {
 
 		assertEq(senderBalanceDelta, transferAmount, "Bad sender delta");
 		assertEq(receiverBalanceDelta, transferAmount, "Bad receiver delta");
+	}
 
+	function testApprove_Static() public {
+		address owner = address(0xDEAD);
+		address spender = address(0xBEEF);
+
+		uint value = 1;
+		vm.prank(owner);
+		erc20.approve(spender,value);
+
+		assertEq(erc20.allowance(owner, spender), value);
+	}
+
+	function testApprove(address owner, address spender, uint value) public {
+		vm.assume(owner != spender);
+
+		vm.prank(owner);
+		erc20.approve(spender,value);
+
+		assertEq(erc20.allowance(owner, spender), value);
 	}
 }
