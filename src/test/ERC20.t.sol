@@ -153,4 +153,44 @@ contract ERC20Test is DSTest {
 		vm.expectRevert(ERC20.NotEnoughBalance.selector);
 		erc20.transferFrom(owner, to, value);
 	}
+
+	function testTransferFrom_Static() public {
+		address owner = address(0xDEAD);
+		address spender = address(0xBEEF);
+		address to = address(0xDEADBEEF);
+
+		uint value = 1;
+		uint allowance = type(uint).max;
+
+		vm.prank(owner);
+		erc20.mint(value);
+		vm.prank(owner);
+		erc20.approve(spender, allowance);
+
+		vm.prank(spender);
+		erc20.transferFrom(owner, to, value);
+
+		assertEq(erc20.balanceOf(owner), 0, "Bad owner balance");
+		assertEq(erc20.balanceOf(to), 1, "Bad receiver balance");
+		assertEq(erc20.allowance(owner, spender), allowance - 1, "Bad owner allowance");
+	}
+
+	function testTransferFrom(address owner, address spender, address to, uint mintValue, uint transferValue, uint allowance) public {
+		vm.assume(owner != to);
+		vm.assume(mintValue > transferValue);
+		vm.assume(allowance > transferValue);
+
+
+		vm.prank(owner);
+		erc20.mint(mintValue);
+		vm.prank(owner);
+		erc20.approve(spender, allowance);
+
+		vm.prank(spender);
+		erc20.transferFrom(owner, to, transferValue);
+
+		assertEq(erc20.balanceOf(owner), mintValue - transferValue, "Bad owner balance");
+		assertEq(erc20.balanceOf(to), transferValue, "Bad receiver balance");
+		assertEq(erc20.allowance(owner, spender), allowance - transferValue, "Bad owner allowance");
+	}
 }

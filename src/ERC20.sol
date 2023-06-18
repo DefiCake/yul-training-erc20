@@ -9,6 +9,7 @@ contract ERC20 {
 
 	error NotEnoughBalance(); // 0xad3a8b9e
 	error NotEnoughAllowance(); // 0x4fd3af07
+	error MathOverflow(); // 0x9d565d4e
 
 	uint256 private immutable _symbol_len;
 	uint256 private immutable _name_len;
@@ -152,16 +153,65 @@ contract ERC20 {
 		return true;
 	}
 
-	function approve(address,uint256) external returns (bool) {
+	function approve(address spender,uint256 value) external returns (bool) {
 		/// @solidity memory-safe-assembly
 		assembly {
 			mstore(0x00, caller())
 			mstore(0x20, ALLOWANCES_SLOT)
 			mstore(0x20, keccak256(0x00, 0x40))
-			mstore(0x00, calldataload(4))
+			mstore(0x00, spender)
 			let slot := keccak256(0x00, 0x40)
 
-			sstore(slot, calldataload(36))
+			sstore(slot, value)
+		}
+
+		return true;
+	}
+
+	function increaseAllowance(address spender,uint value) external returns (bool) {
+		/// @solidity memory-safe-assembly
+		assembly {
+			mstore(0x00, caller())
+			mstore(0x20, ALLOWANCES_SLOT)
+			mstore(0x20, keccak256(0x00, 0x40))
+			mstore(0x00, spender)
+			let slot := keccak256(0x00, 0x40)
+
+			let currentAllowance := sload(slot)
+			let newAllowance := add(currentAllowance, value)
+
+
+			if lt(newAllowance, currentAllowance) {
+				mstore(0x00, 0x9d565d4e) // MathOverflow
+				revert(0x1c, 0x4)
+			}
+
+			sstore(slot, newAllowance)
+		}
+
+		return true;
+	}
+
+	function decreaseAllowance(address spender,uint value) external returns (bool) {
+		/// @solidity memory-safe-assembly
+		assembly {
+			mstore(0x00, caller())
+			mstore(0x20, ALLOWANCES_SLOT)
+			mstore(0x20, keccak256(0x00, 0x40))
+			mstore(0x00, spender)
+			let slot := keccak256(0x00, 0x40)
+
+			let currentAllowance := sload(slot)
+			let newAllowance := sub(currentAllowance, value)
+
+
+			if gt(newAllowance, currentAllowance) {
+				sstore(slot, 0x00)
+				mstore(0x00, 0x1)
+				return(0x00, 0x20)
+			}
+
+			sstore(slot, newAllowance)
 		}
 
 		return true;
