@@ -99,4 +99,58 @@ contract ERC20Test is DSTest {
 
 		assertEq(erc20.allowance(owner, spender), value);
 	}
+
+	function testTransferFrom_NotEnoughAllowance_Static() public {
+		address owner = address(0xDEAD);
+		address spender = address(0xBEEF);
+		address to = address(0xDEADBEEF);
+
+		uint value = 1;
+		vm.prank(owner);
+		erc20.approve(spender, value);
+
+		vm.prank(spender);
+		vm.expectRevert(ERC20.NotEnoughAllowance.selector);
+		erc20.transferFrom(owner, to, value + 1);
+	}
+
+	function testTransferFrom_NotEnoughAllowance(address owner, address spender, address to, uint allowance, uint value) public {
+		vm.assume(allowance < value);
+
+		vm.prank(owner);
+		erc20.approve(spender, allowance);
+
+		vm.prank(spender);
+		vm.expectRevert(ERC20.NotEnoughAllowance.selector);
+		erc20.transferFrom(owner, to, value);
+	}
+
+	function testTransferFrom_NotEnoughBalance_Static() public {
+		address owner = address(0xDEAD);
+		address spender = address(0xBEEF);
+		address to = address(0xDEADBEEF);
+
+		uint value = 1;
+
+		vm.prank(owner);
+		erc20.approve(spender, value);
+
+		vm.prank(spender);
+		vm.expectRevert(ERC20.NotEnoughBalance.selector);
+		erc20.transferFrom(owner, to, value);
+	}
+
+	function testTransferFrom_NotEnoughBalance(address owner, address spender, address to, uint balance, uint value) public {
+		vm.assume(balance < value);
+		
+		vm.prank(owner);
+		erc20.mint(balance);
+
+		vm.prank(owner);
+		erc20.approve(spender, type(uint).max);
+
+		vm.prank(spender);
+		vm.expectRevert(ERC20.NotEnoughBalance.selector);
+		erc20.transferFrom(owner, to, value);
+	}
 }

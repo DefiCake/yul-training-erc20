@@ -7,7 +7,8 @@ contract ERC20 {
 	event Transfer(address indexed from, address indexed to, uint256 amount);
 	event Approval(address indexed);
 
-	error NotEnoughBalance();
+	error NotEnoughBalance(); // 0xad3a8b9e
+	error NotEnoughAllowance(); // 0x4fd3af07
 
 	uint256 private immutable _symbol_len;
 	uint256 private immutable _name_len;
@@ -75,7 +76,7 @@ contract ERC20 {
 		}
 	}
 
-	function allowance(address owner, address spender) public view returns (uint _allowance) {
+	function allowance(address owner, address spender) public view returns (uint) {
 		/// @solidity memory-safe-assembly
 		assembly {
 			mstore(0x00, owner)
@@ -117,6 +118,37 @@ contract ERC20 {
 		address to,
 		uint256 amount
 	) external returns (bool) {
+		assembly {
+			mstore(0x00, from)
+			mstore(0x20, ALLOWANCES_SLOT)
+			mstore(0x20, keccak256(0x00, 0x40))
+			mstore(0x00, caller())
+			let slot := keccak256(0x00, 0x40)
+			let _allowance := sload(slot)
+
+			if lt(_allowance, amount) {
+				mstore(0x00, 0x4fd3af07) // NotEnoughAllowance.selector
+				revert(0x1c, 0x4)
+			}
+
+			sstore(slot, sub(_allowance, amount))
+			mstore(0x00, from)
+			mstore(0x20, BALANCES_SLOT)
+			slot := keccak256(0x00, 0x40)
+
+			let fromBalance := sload(slot)
+
+			if lt(fromBalance, amount) {
+				mstore(0x00, 0xad3a8b9e) // NotEnoughBalance.selector
+				revert(0x1c, 0x4)
+			}
+
+			sstore(slot, sub(fromBalance, amount))
+			
+			mstore(0x00, to)
+			slot := keccak256(0x00, 0x40)
+			sstore(slot, add(sload(slot), amount))
+		}
 		return true;
 	}
 
