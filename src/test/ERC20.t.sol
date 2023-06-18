@@ -193,4 +193,6 @@ contract ERC20Test is DSTest {
 		assertEq(erc20.balanceOf(to), transferValue, "Bad receiver balance");
 		assertEq(erc20.allowance(owner, spender), allowance - transferValue, "Bad owner allowance");
 	}
+
+	function testIncreaseAllowance_Overflow() public {}
 }
